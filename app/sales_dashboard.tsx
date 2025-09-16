@@ -443,7 +443,11 @@ const Dashboard = () => {
               tickFormatter={(value) => `${value}`}
             />
             <Tooltip 
-              formatter={(value) => [`${value.toFixed(0)}`, 'Avg Sales']}
+              formatter={(value) => {
+                const numericValue = typeof value === 'number' ? value : Number(value);
+                const displayValue = Number.isFinite(numericValue) ? numericValue.toFixed(0) : value;
+                return [`${displayValue}`, 'Avg Sales'];
+              }}
               labelFormatter={(label) => `${label}:00`}
             />
             <Line 
