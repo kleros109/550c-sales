@@ -172,13 +172,19 @@ const Dashboard = () => {
   ];
 
   // Calculate additional metrics
-  const enhancedData = salesData.map(month => ({
-    ...month,
-    netToAccount: month.netSales + month.tips + month.taxAmount,
-    tipPercentage: ((month.tips / month.netSales) * 100).toFixed(1),
-    onlinePercent: ((month.onlineOrderingRevenue / month.netSales) * 100).toFixed(1),
-    discountRate: ((month.discounts / month.grossSales) * 100).toFixed(1)
-  }));
+  const enhancedData = salesData.map(month => {
+    const tipPercentage = Number(((month.tips / month.netSales) * 100).toFixed(1));
+    const onlinePercent = Number(((month.onlineOrderingRevenue / month.netSales) * 100).toFixed(1));
+    const discountRate = Number(((month.discounts / month.grossSales) * 100).toFixed(1));
+
+    return {
+      ...month,
+      netToAccount: month.netSales + month.tips + month.taxAmount,
+      tipPercentage,
+      onlinePercent,
+      discountRate
+    };
+  });
 
   // Key metrics
   const totalNetSales = salesData.reduce((sum, month) => sum + month.netSales, 0);
@@ -188,10 +194,10 @@ const Dashboard = () => {
 
   // Growth calculations
   const monthlyGrowth = enhancedData.map((month, index) => {
-    if (index === 0) return { ...month, growth: '0.0' };
+    if (index === 0) return { ...month, growth: 0 };
     const previousMonth = enhancedData[index - 1];
     const growth = ((month.netSales - previousMonth.netSales) / previousMonth.netSales * 100);
-    return { ...month, growth: growth.toFixed(1) };
+    return { ...month, growth: Number(growth.toFixed(1)) };
   });
 
   // Hourly sales data (based on 7am-2pm operating hours, Monday-Friday)
@@ -207,11 +213,17 @@ const Dashboard = () => {
   ];
 
   // Payment method analysis
-  const paymentMethods = enhancedData.map(month => ({
-    month: month.month,
-    Cash: ((month.cash / (month.cash + month.creditDebit)) * 100).toFixed(1),
-    Credit: ((month.creditDebit / (month.cash + month.creditDebit)) * 100).toFixed(1)
-  }));
+  const paymentMethods = enhancedData.map(month => {
+    const totalTenders = month.cash + month.creditDebit;
+    const cashShare = totalTenders === 0 ? 0 : Number(((month.cash / totalTenders) * 100).toFixed(1));
+    const creditShare = totalTenders === 0 ? 0 : Number(((month.creditDebit / totalTenders) * 100).toFixed(1));
+
+    return {
+      month: month.month,
+      Cash: cashShare,
+      Credit: creditShare
+    };
+  });
 
   // Revenue center analysis
   const revenueChannels = enhancedData.map(month => ({
@@ -252,8 +264,8 @@ const Dashboard = () => {
           "Credit": month.creditDebit.toFixed(2),
           "Total Transactions": month.totalPayments,
           "Average Check": month.avgPayment.toFixed(2),
-          "Tips Percentage": month.tipPercentage + "%",
-          "Online Order Percentage": month.onlinePercent + "%",
+          "Tips Percentage": month.tipPercentage.toFixed(1) + "%",
+          "Online Order Percentage": month.onlinePercent.toFixed(1) + "%",
           "Daily Avg Sales (M-F)": dailyAvgSales.toFixed(2),
           "Daily Avg Tips (M-F)": dailyAvgTips.toFixed(2),
           "Daily Avg Transactions (M-F)": dailyAvgTransactions.toFixed(0),
@@ -462,8 +474,8 @@ const Dashboard = () => {
         </ResponsiveContainer>
         <div className="mt-4 p-3 bg-orange-50 rounded-lg">
           <p className="text-sm text-orange-800">
-            <strong>Peak Hours:</strong> 11 AM - 2 PM and 6 PM - 8 PM show highest sales volumes. 
-            Early morning (6-9 AM) and late evening (9+ PM) show lower activity.
+            <strong>Peak Hours:</strong> 11 AM - 1 PM deliver the lunch rush. Morning service (7-9 AM)
+            ramps steadily, and early afternoon (1-2 PM) softens as the café winds down for the day.
           </p>
         </div>
       </div>
@@ -608,8 +620,8 @@ const Dashboard = () => {
                   <td className="px-4 py-2 text-right">${month.tips.toLocaleString()}</td>
                   <td className="px-4 py-2 text-right">{month.totalGuests.toLocaleString()}</td>
                   <td className="px-4 py-2 text-right">${month.avgPayment}</td>
-                  <td className={`px-4 py-2 text-right ${parseFloat(month.growth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {month.growth}%
+                  <td className={`px-4 py-2 text-right ${month.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {month.growth.toFixed(1)}%
                   </td>
                 </tr>
               ))}
@@ -773,7 +785,7 @@ const Dashboard = () => {
                   const dailyAvgTips = month.tips / businessDays;
                   const dailyAvgTransactions = month.totalPayments / businessDays;
                   const dailyAvgCheck = month.avgPayment;
-                  const tipPercentage = month.tipPercentage;
+                  const tipPercentage = month.tipPercentage.toFixed(1);
                   
                   return (
                     <tr key={index} className="border-b">
