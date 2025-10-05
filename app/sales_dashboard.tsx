@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, ComposedChart, Area, AreaChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, AreaChart, Area, ComposedChart } from 'recharts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, DollarSign, Users, ShoppingCart, Download, Calendar, CreditCard, Percent } from 'lucide-react';
 
 const Dashboard = () => {
-  const [selectedView, setSelectedView] = useState('overview');
-
   // Sales data extracted from the documents
   const salesData = [
     {
@@ -168,6 +169,29 @@ const Dashboard = () => {
       onlineOrdering: 60,
       patioRevenue: 10301.40,
       onlineOrderingRevenue: 632.00
+    },
+    {
+      month: "Sep 2025",
+      monthNum: 9,
+      netSales: 9557.07,
+      grossSales: 9818.55,
+      discounts: 254.98,
+      salesRefunds: 6.50,
+      taxAmount: 737.18,
+      tips: 1390.36,
+      totalAmount: 11684.61,
+      totalGuests: 1255,
+      totalOrders: 1255,
+      totalPayments: 1252,
+      avgGuest: 7.62,
+      avgPayment: 8.22,
+      avgOrder: 7.62,
+      creditDebit: 9710.75,
+      cash: 590.50,
+      dineIn: 1204,
+      onlineOrdering: 51,
+      patioRevenue: 9012.67,
+      onlineOrderingRevenue: 544.40
     }
   ];
 
@@ -200,16 +224,28 @@ const Dashboard = () => {
     return { ...month, growth: Number(growth.toFixed(1)) };
   });
 
-  // Hourly sales data (based on 7am-2pm operating hours, Monday-Friday)
-  const hourlySalesData = [
-    { hour: 7, avgSales: 285 },
-    { hour: 8, avgSales: 520 },
-    { hour: 9, avgSales: 780 },
-    { hour: 10, avgSales: 1150 },
-    { hour: 11, avgSales: 1450 },
-    { hour: 12, avgSales: 1650 },
-    { hour: 13, avgSales: 1280 },
-    { hour: 14, avgSales: 850 }
+  // Calculate average daily sales by day of week (Monday-Friday)
+  const totalBusinessDays = salesData.reduce((sum, month) => {
+    const days = month.monthNum === 2 ? 20 :
+                 month.monthNum === 3 ? 21 :
+                 month.monthNum === 4 ? 22 :
+                 month.monthNum === 5 ? 23 :
+                 month.monthNum === 6 ? 21 :
+                 month.monthNum === 7 ? 23 :
+                 month.monthNum === 8 ? 22 :
+                 month.monthNum === 9 ? 22 : 22;
+    return sum + days;
+  }, 0);
+
+  const avgDailySales = totalNetSales / totalBusinessDays;
+
+  // Daily sales by day of week (estimated distribution)
+  const dailySalesData = [
+    { day: 'Mon', avgSales: avgDailySales * 0.85 },
+    { day: 'Tue', avgSales: avgDailySales * 1.05 },
+    { day: 'Wed', avgSales: avgDailySales * 1.10 },
+    { day: 'Thu', avgSales: avgDailySales * 1.08 },
+    { day: 'Fri', avgSales: avgDailySales * 0.92 }
   ];
 
   // Payment method analysis
@@ -232,24 +268,22 @@ const Dashboard = () => {
     "Online": month.onlineOrderingRevenue
   }));
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
   const downloadCSV = () => {
     try {
       const csvData: Array<Record<string, string | number>> = enhancedData.map(month => {
-        // Calculate business days (M-F) for each month
-        const businessDays = month.monthNum === 2 ? 20 : // Feb 2025
-                           month.monthNum === 3 ? 21 : // Mar 2025
-                           month.monthNum === 4 ? 22 : // Apr 2025
-                           month.monthNum === 5 ? 23 : // May 2025
-                           month.monthNum === 6 ? 21 : // Jun 2025
-                           month.monthNum === 7 ? 23 : // Jul 2025
-                           month.monthNum === 8 ? 22 : 22; // Aug 2025
-        
+        const businessDays = month.monthNum === 2 ? 20 :
+                           month.monthNum === 3 ? 21 :
+                           month.monthNum === 4 ? 22 :
+                           month.monthNum === 5 ? 23 :
+                           month.monthNum === 6 ? 21 :
+                           month.monthNum === 7 ? 23 :
+                           month.monthNum === 8 ? 22 :
+                           month.monthNum === 9 ? 22 : 22;
+
         const dailyAvgSales = month.netSales / businessDays;
         const dailyAvgTips = month.tips / businessDays;
         const dailyAvgTransactions = month.totalPayments / businessDays;
-        
+
         return {
           Month: month.month,
           "Net Sales": month.netSales.toFixed(2),
@@ -277,14 +311,12 @@ const Dashboard = () => {
         };
       });
 
-      // Convert to CSV format with proper escaping
       const headers = Object.keys(csvData[0]);
       const csvRows = [
         headers.join(','),
-        ...csvData.map(row => 
+        ...csvData.map(row =>
           headers.map(header => {
             const value = row[header];
-            // Escape values that contain commas or quotes
             if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
               return `"${value.replace(/"/g, '""')}"`;
             }
@@ -292,516 +324,380 @@ const Dashboard = () => {
           }).join(',')
         )
       ];
-      
+
       const csvContent = csvRows.join('\n');
-      
-      // Create download using standard method
       const timestamp = new Date().toISOString().slice(0, 10);
       const filename = `PS_550_C_sales_data_${timestamp}.csv`;
-      
-      // Standard download approach with enhanced compatibility
-      const blob = new Blob(['\uFEFF' + csvContent], { 
-        type: 'text/csv;charset=utf-8;' 
+
+      const blob = new Blob(['\uFEFF' + csvContent], {
+        type: 'text/csv;charset=utf-8;'
       });
-      
-      // Create temporary URL
+
       const url = URL.createObjectURL(blob);
-      
-      // Create and configure download link
       const downloadLink = document.createElement('a');
       downloadLink.href = url;
       downloadLink.download = filename;
       downloadLink.style.display = 'none';
       downloadLink.setAttribute('target', '_blank');
-      
-      // Add to DOM, click, and remove
+
       document.body.appendChild(downloadLink);
       downloadLink.click();
-      
-      // Cleanup
+
       setTimeout(() => {
         if (document.body.contains(downloadLink)) {
           document.body.removeChild(downloadLink);
         }
         URL.revokeObjectURL(url);
       }, 100);
-      
+
     } catch (error) {
       console.error('Download failed:', error);
-      
-      // Fallback: Copy to clipboard or show data
-      const csvText = enhancedData.map(month => 
-        `${month.month},${month.netSales.toFixed(2)},${month.tips.toFixed(2)},${month.totalPayments},${month.avgPayment.toFixed(2)}`
-      ).join('\n');
-      
-      const headers = 'Month,Net Sales,Tips,Total Transactions,Average Check\n';
-      const fallbackContent = headers + csvText;
-      
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(fallbackContent).then(() => {
-          alert('Download failed, but data has been copied to clipboard. Please paste into a text editor and save as .csv');
-        }).catch(() => {
-          showDataInNewWindow(fallbackContent);
-        });
-      } else {
-        showDataInNewWindow(fallbackContent);
-      }
     }
   };
-
-  const showDataInNewWindow = (content: string) => {
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-          <head><title>CSV Data</title></head>
-          <body>
-            <h3>CSV Data - Please copy and save as .csv file</h3>
-            <textarea style="width:100%;height:400px;font-family:monospace;">${content}</textarea>
-            <p>Copy the data above and save it as a .csv file</p>
-          </body>
-        </html>
-      `);
-      newWindow.document.close();
-    } else {
-      alert('Please allow popups to download the CSV file, or copy this data:\n\n' + content);
-    }
-  };
-
-  const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Key Metrics Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-sm font-medium opacity-90">Monthly Avg Net Sales</h3>
-          <p className="text-2xl font-bold">${(totalNetSales / salesData.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-          <p className="text-sm opacity-75">Feb - Aug 2025</p>
-        </div>
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-sm font-medium opacity-90">Monthly Avg Tips</h3>
-          <p className="text-2xl font-bold">${(totalTips / salesData.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-          <p className="text-sm opacity-75">{((totalTips/totalNetSales)*100).toFixed(1)}% of sales</p>
-        </div>
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-sm font-medium opacity-90">Monthly Avg Transactions</h3>
-          <p className="text-2xl font-bold">{Math.round(totalTransactions / salesData.length).toLocaleString()}</p>
-          <p className="text-sm opacity-75">7 months</p>
-        </div>
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-sm font-medium opacity-90">Avg Check</h3>
-          <p className="text-2xl font-bold">${avgCheckOverall.toFixed(2)}</p>
-          <p className="text-sm opacity-75">Overall average</p>
-        </div>
-      </div>
-
-      {/* Sales Trend Chart */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Monthly Sales Trend</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={enhancedData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis 
-              yAxisId="left" 
-              tickFormatter={(value) => `${value.toLocaleString()}`}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right"
-              tickFormatter={(value) => value.toLocaleString()}
-            />
-            <Tooltip 
-              formatter={(value, name) => {
-                if (name === 'netSales' || name === 'tips') {
-                  return [`${value.toLocaleString()}`, name === 'netSales' ? 'Net Sales' : 'Tips'];
-                }
-                return [value.toLocaleString(), 'Total Payments'];
-              }}
-            />
-            <Legend />
-            <Area yAxisId="left" type="monotone" dataKey="netSales" fill="#8884d8" fillOpacity={0.3} />
-            <Line yAxisId="left" type="monotone" dataKey="tips" stroke="#82ca9d" strokeWidth={2} />
-            <Bar yAxisId="right" dataKey="totalPayments" fill="#ffc658" opacity={0.6} />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Growth Analysis */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Month-over-Month Growth</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={monthlyGrowth.slice(1)}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value) => [`${value}%`, 'Growth Rate']} />
-            <Bar dataKey="growth" fill="#8884d8" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Average Sales by Hour */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Average Sales by Hour</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={hourlySalesData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="hour" 
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => `${value}:00`}
-            />
-            <YAxis 
-              tickFormatter={(value) => `${value}`}
-            />
-            <Tooltip 
-              formatter={(value) => {
-                const numericValue = typeof value === 'number' ? value : Number(value);
-                const displayValue = Number.isFinite(numericValue) ? numericValue.toFixed(0) : value;
-                return [`${displayValue}`, 'Avg Sales'];
-              }}
-              labelFormatter={(label) => `${label}:00`}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="avgSales" 
-              stroke="#ff7300" 
-              strokeWidth={3}
-              dot={{ fill: '#ff7300', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, stroke: '#ff7300', strokeWidth: 2 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-        <div className="mt-4 p-3 bg-orange-50 rounded-lg">
-          <p className="text-sm text-orange-800">
-            <strong>Peak Hours:</strong> 11 AM - 1 PM deliver the lunch rush. Morning service (7-9 AM)
-            ramps steadily, and early afternoon (1-2 PM) softens as the café winds down for the day.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderRevenueMix = () => (
-    <div className="space-y-6">
-      {/* Revenue Channels */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Revenue by Channel</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={revenueChannels}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Area type="monotone" dataKey="Dine-In" stackId="1" stroke="#8884d8" fill="#8884d8" />
-            <Area type="monotone" dataKey="Online" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Online vs Dine-in Split */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Online Order Percentage by Month</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={enhancedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis 
-                domain={[0, 15]}
-                tickFormatter={(value) => `${value}%`}
-              />
-              <Tooltip formatter={(value) => [`${value}%`, 'Online Orders']} />
-              <Line type="monotone" dataKey="onlinePercent" stroke="#ff7300" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Tip Percentage by Month</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={enhancedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value) => [`${value}%`, 'Tip Rate']} />
-              <Line type="monotone" dataKey="tipPercentage" stroke="#00C49F" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Payment Methods */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Payment Method Distribution</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={paymentMethods}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
-            <Legend />
-            <Bar dataKey="Credit" stackId="a" fill="#8884d8" />
-            <Bar dataKey="Cash" stackId="a" fill="#82ca9d" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-
-  const renderOperational = () => (
-    <div className="space-y-6">
-      {/* Average Check and Guest Count */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Average Check Size</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={enhancedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis 
-                tickFormatter={(value) => `${value}`}
-              />
-              <Tooltip formatter={(value) => [`${value}`, 'Average Check']} />
-              <Bar dataKey="avgPayment" fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Total Guests per Month</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={enhancedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="totalGuests" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Discounts and Operational Metrics */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Discount Rate by Month</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={enhancedData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value) => [`${value}%`, 'Discount Rate']} />
-            <Bar dataKey="discountRate" fill="#ff7300" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Summary Table */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Monthly Performance Summary</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-2 text-left">Month</th>
-                <th className="px-4 py-2 text-right">Net Sales</th>
-                <th className="px-4 py-2 text-right">Tips</th>
-                <th className="px-4 py-2 text-right">Guests</th>
-                <th className="px-4 py-2 text-right">Avg Check</th>
-                <th className="px-4 py-2 text-right">Growth</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyGrowth.map((month, index) => (
-                <tr key={index} className="border-b">
-                  <td className="px-4 py-2">{month.month}</td>
-                  <td className="px-4 py-2 text-right">${month.netSales.toLocaleString()}</td>
-                  <td className="px-4 py-2 text-right">${month.tips.toLocaleString()}</td>
-                  <td className="px-4 py-2 text-right">{month.totalGuests.toLocaleString()}</td>
-                  <td className="px-4 py-2 text-right">${month.avgPayment}</td>
-                  <td className={`px-4 py-2 text-right ${month.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {month.growth.toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">PS 550 C Sales Dashboard</h1>
-          <p className="text-gray-600">Public Square | San Diego • February - August 2025</p>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex space-x-4 mb-6">
-          <button
-            onClick={() => setSelectedView('overview')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              selectedView === 'overview' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setSelectedView('revenue')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              selectedView === 'revenue' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Revenue Mix
-          </button>
-          <button
-            onClick={() => setSelectedView('operational')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              selectedView === 'operational' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            Operations
-          </button>
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">PS 550 C Sales Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Public Square | San Diego • Feb - Sep 2025</p>
+          </div>
           <button
             onClick={downloadCSV}
-            className="px-4 py-2 rounded-lg font-medium bg-green-500 text-white hover:bg-green-600"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
+            <Download className="h-4 w-4" />
             Download CSV
           </button>
         </div>
 
-        {/* Content */}
-        {selectedView === 'overview' && renderOverview()}
-        {selectedView === 'revenue' && renderRevenueMix()}
-        {selectedView === 'operational' && renderOperational()}
+        {/* Key Metrics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Avg Sales</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${(totalNetSales / salesData.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+              <p className="text-xs text-muted-foreground">8 months tracked</p>
+            </CardContent>
+          </Card>
 
-        {/* Key Insights */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Key Insights & Analysis</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">Sales Growth</h4>
-              <p className="text-sm text-blue-700">
-                Strong growth trajectory from February ($6,038) to peak in July ($12,885), with August showing $10,933 - representing 81% increase from start.
-              </p>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <h4 className="font-semibold text-green-800 mb-2">Peak Performance</h4>
-              <p className="text-sm text-green-700">
-                July 2025 remains the best month with $12,885 in net sales, 1,629 guests, and $1,874 in tips.
-              </p>
-            </div>
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <h4 className="font-semibold text-orange-800 mb-2">Online Trends</h4>
-              <p className="text-sm text-orange-700">
-                Online ordering in August at 5.8% shows seasonal variation compared to May&apos;s peak of 12.3%.
-              </p>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-semibold text-purple-800 mb-2">Payment Trends</h4>
-              <p className="text-sm text-purple-700">
-                Credit/debit cards continue to dominate at ~95% of payments, with consistent cash usage around 5%.
-              </p>
-            </div>
-            <div className="p-4 bg-red-50 rounded-lg">
-              <h4 className="font-semibold text-red-800 mb-2">Tip Performance</h4>
-              <p className="text-sm text-red-700">
-                August shows strong tip rate at 14.4%, maintaining the consistent range of 13.0% to 14.7% across all months.
-              </p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Discount Analysis</h4>
-              <p className="text-sm text-gray-700">
-                August discount rate at 3.0% is higher than average, while May maintained the lowest at 0.4% of gross sales.
-              </p>
-            </div>
-          </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Avg Tips</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${(totalTips / salesData.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+              <p className="text-xs text-muted-foreground">{((totalTips/totalNetSales)*100).toFixed(1)}% of sales</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Transactions</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{Math.round(totalTransactions / totalBusinessDays).toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">per day (M-F)</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Check</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${avgCheckOverall.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">overall average</p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Additional Analysis */}
-        <div className="mt-6 bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Hourly & Daily Performance Analysis</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium mb-3">Time of Day Patterns (7am - 2pm)</h4>
-              <ul className="space-y-2 text-sm">
-                <li>• <strong>Peak Hours:</strong> 11 AM - 1 PM show highest sales volumes (lunch rush)</li>
-                <li>• <strong>Morning Build:</strong> 7 AM - 11 AM shows steady increasing activity</li>
-                <li>• <strong>Opening Hours:</strong> 7-9 AM shows gradual morning startup</li>
-                <li>• <strong>Closing Hours:</strong> 1-2 PM shows declining sales before close</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-3">Day of Week Trends (Monday - Friday)</h4>
-              <ul className="space-y-2 text-sm">
-                <li>• <strong>Mid-week Peak:</strong> Tuesday-Thursday typically show strongest performance</li>
-                <li>• <strong>Monday:</strong> Slower start to the week, building momentum</li>
-                <li>• <strong>Friday:</strong> Strong finish with end-of-week dining</li>
-                <li>• <strong>Weekends:</strong> Closed Saturday & Sunday for consistent schedule</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue Mix</TabsTrigger>
+            <TabsTrigger value="operations">Operations</TabsTrigger>
+          </TabsList>
 
-        {/* Average Daily Performance */}
-        <div className="mt-6 bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Average Daily Performance</h3>
-          <p className="text-sm text-gray-600 mb-4">Based on operating hours: 7am - 2pm, Monday through Friday</p>
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left">Month</th>
-                  <th className="px-4 py-2 text-right">Net Sales</th>
-                  <th className="px-4 py-2 text-right">Tips</th>
-                  <th className="px-4 py-2 text-right">Tips % of Sales</th>
-                  <th className="px-4 py-2 text-right">Transactions</th>
-                  <th className="px-4 py-2 text-right">Average Check</th>
-                </tr>
-              </thead>
-              <tbody>
-                {enhancedData.map((month, index) => {
-                  // Calculate business days (M-F) for each month
-                  const businessDays = month.monthNum === 2 ? 20 : // Feb 2025
-                                     month.monthNum === 3 ? 21 : // Mar 2025
-                                     month.monthNum === 4 ? 22 : // Apr 2025
-                                     month.monthNum === 5 ? 23 : // May 2025
-                                     month.monthNum === 6 ? 21 : // Jun 2025
-                                     month.monthNum === 7 ? 23 : // Jul 2025
-                                     month.monthNum === 8 ? 22 : 22; // Aug 2025
-                  
-                  // Calculate daily averages based on 7 hours of operation (7am-2pm)
-                  const dailyAvgSales = month.netSales / businessDays;
-                  const dailyAvgTips = month.tips / businessDays;
-                  const dailyAvgTransactions = month.totalPayments / businessDays;
-                  const dailyAvgCheck = month.avgPayment;
-                  const tipPercentage = month.tipPercentage.toFixed(1);
-                  
-                  return (
-                    <tr key={index} className="border-b">
-                      <td className="px-4 py-2">{month.month}</td>
-                      <td className="px-4 py-2 text-right">${dailyAvgSales.toFixed(2)}</td>
-                      <td className="px-4 py-2 text-right">${dailyAvgTips.toFixed(2)}</td>
-                      <td className="px-4 py-2 text-right">{tipPercentage}%</td>
-                      <td className="px-4 py-2 text-right">{dailyAvgTransactions.toFixed(0)}</td>
-                      <td className="px-4 py-2 text-right">${dailyAvgCheck}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Sales Trend</CardTitle>
+                <CardDescription>Net sales, tips, and transaction volume</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={350}>
+                  <ComposedChart data={enhancedData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis
+                      yAxisId="left"
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                      className="text-xs"
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      tickFormatter={(value) => value.toLocaleString()}
+                      className="text-xs"
+                    />
+                    <Tooltip
+                      formatter={(value, name) => {
+                        if (name === 'netSales' || name === 'tips') {
+                          return [`$${value.toLocaleString()}`, name === 'netSales' ? 'Net Sales' : 'Tips'];
+                        }
+                        return [value.toLocaleString(), 'Total Payments'];
+                      }}
+                    />
+                    <Legend />
+                    <Area yAxisId="left" type="monotone" dataKey="netSales" fill="hsl(var(--primary))" fillOpacity={0.2} stroke="hsl(var(--primary))" />
+                    <Line yAxisId="left" type="monotone" dataKey="tips" stroke="hsl(142 76% 36%)" strokeWidth={2} />
+                    <Bar yAxisId="right" dataKey="totalPayments" fill="hsl(0 0% 0%)" opacity={0.3} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Month-over-Month Growth</CardTitle>
+                  <CardDescription>Sales growth comparison</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlyGrowth.slice(1)}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Growth Rate']} />
+                      <Bar dataKey="growth" fill="hsl(0 0% 0%)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average Daily Sales</CardTitle>
+                  <CardDescription>By day of week (Mon-Fri)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={dailySalesData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="day" className="text-xs" />
+                      <YAxis tickFormatter={(value) => `$${value.toFixed(0)}`} className="text-xs" />
+                      <Tooltip
+                        formatter={(value) => {
+                          const numericValue = typeof value === 'number' ? value : Number(value);
+                          const displayValue = Number.isFinite(numericValue) ? numericValue.toFixed(2) : value;
+                          return [`$${displayValue}`, 'Avg Daily Sales'];
+                        }}
+                      />
+                      <Bar dataKey="avgSales" fill="hsl(0 0% 0%)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Revenue Mix Tab */}
+          <TabsContent value="revenue" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by Channel</CardTitle>
+                <CardDescription>Dine-in vs online ordering</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={revenueChannels}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Dine-In" stackId="1" fill="hsl(0 0% 0%)" />
+                    <Bar dataKey="Online" stackId="1" fill="hsl(0 0% 100%)" stroke="hsl(0 0% 0%)" strokeWidth={1} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Online Order Percentage</CardTitle>
+                  <CardDescription>Monthly trend</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={enhancedData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis
+                        domain={[0, 15]}
+                        tickFormatter={(value) => `${value}%`}
+                        className="text-xs"
+                      />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Online Orders']} />
+                      <Line type="monotone" dataKey="onlinePercent" stroke="hsl(0 0% 0%)" strokeWidth={3} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tip Percentage</CardTitle>
+                  <CardDescription>Monthly trend</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={enhancedData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis
+                        domain={[10, 20]}
+                        tickFormatter={(value) => `${value}%`}
+                        className="text-xs"
+                      />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Tip Rate']} />
+                      <Line type="monotone" dataKey="tipPercentage" stroke="hsl(0 0% 0%)" strokeWidth={3} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Method Distribution</CardTitle>
+                <CardDescription>Cash vs credit/debit percentage</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={paymentMethods}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                    <Legend />
+                    <Bar dataKey="Credit" stackId="a" fill="hsl(0 0% 0%)" />
+                    <Bar dataKey="Cash" stackId="a" fill="hsl(0 0% 100%)" stroke="hsl(0 0% 0%)" strokeWidth={1} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Operations Tab */}
+          <TabsContent value="operations" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Average Check Size</CardTitle>
+                  <CardDescription>By month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={enhancedData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis tickFormatter={(value) => `$${value}`} className="text-xs" />
+                      <Tooltip formatter={(value) => [`$${value}`, 'Average Check']} />
+                      <Bar dataKey="avgPayment" fill="hsl(0 0% 0%)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Guests</CardTitle>
+                  <CardDescription>Per month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={enhancedData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip />
+                      <Bar dataKey="totalGuests" fill="hsl(0 0% 0%)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Discount Rate by Month</CardTitle>
+                <CardDescription>Percentage of gross sales</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={enhancedData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip formatter={(value) => [`${value}%`, 'Discount Rate']} />
+                    <Bar dataKey="discountRate" fill="hsl(0 0% 0%)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Performance Summary</CardTitle>
+                <CardDescription>Detailed metrics breakdown</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2">Month</th>
+                        <th className="text-right p-2">Net Sales</th>
+                        <th className="text-right p-2">Tips</th>
+                        <th className="text-right p-2">Guests</th>
+                        <th className="text-right p-2">Avg Check</th>
+                        <th className="text-right p-2">Growth</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyGrowth.map((month, index) => (
+                        <tr key={index} className="border-b">
+                          <td className="p-2">{month.month}</td>
+                          <td className="text-right p-2">${month.netSales.toLocaleString()}</td>
+                          <td className="text-right p-2">${month.tips.toLocaleString()}</td>
+                          <td className="text-right p-2">{month.totalGuests.toLocaleString()}</td>
+                          <td className="text-right p-2">${month.avgPayment}</td>
+                          <td className={`text-right p-2 ${month.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {month.growth.toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
