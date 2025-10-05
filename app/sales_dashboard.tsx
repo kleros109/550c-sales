@@ -422,10 +422,11 @@ const Dashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="revenue">Revenue Mix</TabsTrigger>
             <TabsTrigger value="operations">Operations</TabsTrigger>
+            <TabsTrigger value="commentary">Commentary</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -433,36 +434,70 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Monthly Sales Trend</CardTitle>
-                <CardDescription>Net sales, tips, and transaction volume</CardDescription>
+                <CardDescription>Net sales and transaction volume</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <ComposedChart data={enhancedData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" className="text-xs" />
+                <ResponsiveContainer width="100%" height={400}>
+                  <ComposedChart data={enhancedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
+                    />
                     <YAxis
                       yAxisId="left"
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                      className="text-xs"
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
                     />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
                       tickFormatter={(value) => value.toLocaleString()}
-                      className="text-xs"
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'hsl(var(--border))' }}
                     />
                     <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
                       formatter={(value, name) => {
-                        if (name === 'netSales' || name === 'tips') {
-                          return [`$${value.toLocaleString()}`, name === 'netSales' ? 'Net Sales' : 'Tips'];
+                        if (name === 'netSales') {
+                          return [`$${value.toLocaleString()}`, 'Net Sales'];
                         }
-                        return [value.toLocaleString(), 'Total Payments'];
+                        return [value.toLocaleString(), 'Transactions'];
                       }}
                     />
-                    <Legend />
-                    <Area yAxisId="left" type="monotone" dataKey="netSales" fill="hsl(var(--primary))" fillOpacity={0.2} stroke="hsl(var(--primary))" />
-                    <Line yAxisId="left" type="monotone" dataKey="tips" stroke="hsl(142 76% 36%)" strokeWidth={2} />
-                    <Bar yAxisId="right" dataKey="totalPayments" fill="hsl(0 0% 0%)" opacity={0.3} />
+                    <Legend
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="line"
+                      formatter={(value) => {
+                        if (value === 'netSales') return 'Net Sales';
+                        return 'Transactions';
+                      }}
+                    />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="netSales"
+                      fill="hsl(var(--foreground))"
+                      maxBarSize={60}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="totalPayments"
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--background))', stroke: 'hsl(var(--muted-foreground))', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: 'hsl(var(--foreground))' }}
+                    />
                   </ComposedChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -693,6 +728,156 @@ const Dashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Commentary Tab */}
+          <TabsContent value="commentary" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>September 2025 Operations Overview</CardTitle>
+                <CardDescription>Report Date: October 5, 2025 | Period: September 1-30, 2025 (22 business days, M-F)</CardDescription>
+              </CardHeader>
+              <CardContent className="prose prose-sm max-w-none">
+                <div className="space-y-6 text-sm md:text-base">
+                  {/* Executive Summary */}
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3">Executive Summary</h3>
+                    <p>September 2025 showed moderate performance with <strong>$9,557.07</strong> in net sales, representing a <strong>-12.6%</strong> decrease from August but maintaining strong tip rates at <strong>14.5%</strong>. The month settled into a stable operational pattern with consistent transaction volumes and average check sizes.</p>
+                  </section>
+
+                  {/* Financial Performance */}
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3">Financial Performance</h3>
+                    <div className="overflow-x-auto mb-4 -mx-4 px-4 md:mx-0 md:px-0">
+                      <table className="w-full text-xs md:text-sm border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Metric</th>
+                            <th className="text-right p-2">Amount</th>
+                            <th className="text-right p-2">Per Day (M-F)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b"><td className="p-2"><strong>Net Sales</strong></td><td className="text-right p-2">$9,557.07</td><td className="text-right p-2">$434.41</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Gross Sales</strong></td><td className="text-right p-2">$9,818.55</td><td className="text-right p-2">$446.30</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Tips</strong></td><td className="text-right p-2">$1,390.36</td><td className="text-right p-2">$63.20</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Tax Amount</strong></td><td className="text-right p-2">$737.18</td><td className="text-right p-2">$33.51</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Total Amount</strong></td><td className="text-right p-2">$11,684.61</td><td className="text-right p-2">$531.12</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Discounts</strong></td><td className="text-right p-2">$254.98</td><td className="text-right p-2">$11.59</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Sales Refunds</strong></td><td className="text-right p-2">$6.50</td><td className="text-right p-2">$0.30</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <h4 className="font-semibold mb-2">3-Month Comparison (Jul-Sep)</h4>
+                    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                      <table className="w-full text-xs md:text-sm border-collapse min-w-[600px]">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Month</th>
+                            <th className="text-right p-2">Net Sales</th>
+                            <th className="text-right p-2">Change</th>
+                            <th className="text-right p-2">Tips</th>
+                            <th className="text-right p-2">Tip %</th>
+                            <th className="text-right p-2">Transactions</th>
+                            <th className="text-right p-2">Avg Check</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b"><td className="p-2"><strong>July</strong></td><td className="text-right p-2">$12,884.75</td><td className="text-right p-2">-</td><td className="text-right p-2">$1,873.70</td><td className="text-right p-2">14.5%</td><td className="text-right p-2">1,626</td><td className="text-right p-2">$8.54</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>August</strong></td><td className="text-right p-2">$10,933.40</td><td className="text-right p-2">-15.1%</td><td className="text-right p-2">$1,574.10</td><td className="text-right p-2">14.4%</td><td className="text-right p-2">1,372</td><td className="text-right p-2">$8.58</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>September</strong></td><td className="text-right p-2">$9,557.07</td><td className="text-right p-2">-12.6%</td><td className="text-right p-2">$1,390.36</td><td className="text-right p-2">14.5%</td><td className="text-right p-2">1,252</td><td className="text-right p-2">$8.22</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  {/* Key Insights */}
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3">Key Insights</h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <h4 className="font-semibold text-green-600 mb-2">✅ Strengths</h4>
+                        <ul className="list-disc list-inside space-y-1 text-xs md:text-sm pl-1">
+                          <li>Maintained High Tip Rate: 14.5% tip rate matches best months</li>
+                          <li>Cash Accuracy: Perfect cash reconciliation</li>
+                          <li>Low Void Rate: 0.8% indicates operational excellence</li>
+                          <li>Stable Online Presence: 5.7% online orders consistent with August</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-orange-600 mb-2">⚠️ Areas of Concern</h4>
+                        <ul className="list-disc list-inside space-y-1 text-xs md:text-sm pl-1">
+                          <li>Declining Sales: -12.6% from August, continuing summer decline</li>
+                          <li>Lower Transaction Volume: 1,252 transactions vs 1,372 in August</li>
+                          <li>Reduced Average Check: $8.22, lowest since February</li>
+                          <li>Decreased Guest Count: 1,255 guests vs 1,629 in July</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Channel Performance */}
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3">Channel Performance</h3>
+                    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                      <table className="w-full text-xs md:text-sm border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Channel</th>
+                            <th className="text-right p-2">Revenue</th>
+                            <th className="text-right p-2">% of Total</th>
+                            <th className="text-right p-2">Orders</th>
+                            <th className="text-right p-2">Avg Order</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b"><td className="p-2"><strong>Dine-In (Patio)</strong></td><td className="text-right p-2">$9,012.67</td><td className="text-right p-2">94.3%</td><td className="text-right p-2">1,204</td><td className="text-right p-2">$7.49</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Online Ordering</strong></td><td className="text-right p-2">$544.40</td><td className="text-right p-2">5.7%</td><td className="text-right p-2">51</td><td className="text-right p-2">$10.67</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-xs md:text-sm mt-2">Online orders have higher average value ($10.67 vs $7.49) and remained steady at 5.7%.</p>
+                  </section>
+
+                  {/* Recommendations */}
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3">Recommendations</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold mb-1">Short-term Actions (October)</h4>
+                        <ul className="list-disc list-inside space-y-1 text-xs md:text-sm pl-1">
+                          <li><strong>Promotional Strategy:</strong> Consider limited-time promotions to increase average check size</li>
+                          <li><strong>Peak Hour Focus:</strong> Maximize lunch rush (11 AM - 1 PM) capacity and service</li>
+                          <li><strong>Online Ordering:</strong> Maintain focus on takeout marketing given higher order values ($10.67 vs $7.49 dine-in)</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-1">Medium-term Initiatives (Q4 2025)</h4>
+                        <ul className="list-disc list-inside space-y-1 text-xs md:text-sm pl-1">
+                          <li><strong>Menu Analysis:</strong> Review pricing strategy to improve check averages</li>
+                          <li><strong>Capacity Optimization:</strong> Analyze 7 AM - 2 PM window for potential hour adjustments</li>
+                          <li><strong>Customer Retention:</strong> Develop loyalty program to maintain guest frequency</li>
+                          <li><strong>Seasonal Menu:</strong> Introduce fall/winter specials to drive ticket size</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Conclusion */}
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3">Conclusion</h3>
+                    <p>September 2025 operations demonstrated stable performance with excellent operational metrics (perfect cash management, low voids, strong tips) despite expected seasonal sales declines. The 14.5% tip rate and operational efficiency indicate maintained service quality. Focus should shift to strategies for increasing transaction volume and average check size as we enter Q4 2025.</p>
+                    <p className="mt-2"><strong>Overall Assessment:</strong> Operationally sound with revenue optimization opportunities.</p>
+                  </section>
+
+                  <div className="text-xs text-muted-foreground mt-6 pt-4 border-t">
+                    <p>Report compiled from Toast POS data covering September 1-30, 2025</p>
+                    <p>PS 550 C - Public Square, San Diego</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
