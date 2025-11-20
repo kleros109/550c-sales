@@ -192,6 +192,29 @@ const Dashboard = () => {
       onlineOrdering: 51,
       patioRevenue: 9012.67,
       onlineOrderingRevenue: 544.40
+    },
+    {
+      month: "Oct 2025",
+      monthNum: 10,
+      netSales: 8939.95,
+      grossSales: 9069.45,
+      discounts: 106.05,
+      salesRefunds: 25.26,
+      taxAmount: 693.45,
+      tips: 1265.67,
+      totalAmount: 10899.07,
+      totalGuests: 1057,
+      totalOrders: 1057,
+      totalPayments: 1055,
+      avgGuest: 8.46,
+      avgPayment: 9.15,
+      avgOrder: 8.46,
+      creditDebit: 9164.72,
+      cash: 498.67,
+      dineIn: 1014,
+      onlineOrdering: 43,
+      patioRevenue: 8510.95,
+      onlineOrderingRevenue: 429.00
     }
   ];
 
@@ -227,13 +250,14 @@ const Dashboard = () => {
   // Calculate average daily sales by day of week (Monday-Friday)
   const totalBusinessDays = salesData.reduce((sum, month) => {
     const days = month.monthNum === 2 ? 20 :
-                 month.monthNum === 3 ? 21 :
-                 month.monthNum === 4 ? 22 :
-                 month.monthNum === 5 ? 23 :
-                 month.monthNum === 6 ? 21 :
-                 month.monthNum === 7 ? 23 :
-                 month.monthNum === 8 ? 22 :
-                 month.monthNum === 9 ? 22 : 22;
+      month.monthNum === 3 ? 21 :
+        month.monthNum === 4 ? 22 :
+          month.monthNum === 5 ? 23 :
+            month.monthNum === 6 ? 21 :
+              month.monthNum === 7 ? 23 :
+                month.monthNum === 8 ? 22 :
+                  month.monthNum === 9 ? 22 :
+                    month.monthNum === 10 ? 23 : 22;
     return sum + days;
   }, 0);
 
@@ -272,13 +296,13 @@ const Dashboard = () => {
     try {
       const csvData: Array<Record<string, string | number>> = enhancedData.map(month => {
         const businessDays = month.monthNum === 2 ? 20 :
-                           month.monthNum === 3 ? 21 :
-                           month.monthNum === 4 ? 22 :
-                           month.monthNum === 5 ? 23 :
-                           month.monthNum === 6 ? 21 :
-                           month.monthNum === 7 ? 23 :
-                           month.monthNum === 8 ? 22 :
-                           month.monthNum === 9 ? 22 : 22;
+          month.monthNum === 3 ? 21 :
+            month.monthNum === 4 ? 22 :
+              month.monthNum === 5 ? 23 :
+                month.monthNum === 6 ? 21 :
+                  month.monthNum === 7 ? 23 :
+                    month.monthNum === 8 ? 22 :
+                      month.monthNum === 9 ? 22 : 22;
 
         const dailyAvgSales = month.netSales / businessDays;
         const dailyAvgTips = month.tips / businessDays;
@@ -362,7 +386,7 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">PS 550 C Sales Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Public Square | San Diego • Feb - Sep 2025</p>
+            <p className="text-muted-foreground mt-1">Public Square | San Diego • Feb - Oct 2025</p>
           </div>
           <button
             onClick={downloadCSV}
@@ -381,7 +405,7 @@ const Dashboard = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${(totalNetSales / salesData.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+              <div className="text-2xl font-bold">${(totalNetSales / salesData.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               <p className="text-xs text-muted-foreground">8 months tracked</p>
             </CardContent>
           </Card>
@@ -392,8 +416,8 @@ const Dashboard = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${(totalTips / salesData.length).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-              <p className="text-xs text-muted-foreground">{((totalTips/totalNetSales)*100).toFixed(1)}% of sales</p>
+              <div className="text-2xl font-bold">${(totalTips / salesData.length).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <p className="text-xs text-muted-foreground">{((totalTips / totalNetSales) * 100).toFixed(1)}% of sales</p>
             </CardContent>
           </Card>
 
@@ -403,7 +427,7 @@ const Dashboard = () => {
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totalTransactions / totalBusinessDays).toLocaleString()}</div>
+              <div className="text-2xl font-bold">{Math.round(totalTransactions / totalBusinessDays).toLocaleString('en-US')}</div>
               <p className="text-xs text-muted-foreground">per day (M-F)</p>
             </CardContent>
           </Card>
@@ -456,7 +480,7 @@ const Dashboard = () => {
                     <YAxis
                       yAxisId="right"
                       orientation="right"
-                      tickFormatter={(value) => value.toLocaleString()}
+                      tickFormatter={(value) => value.toLocaleString('en-US')}
                       tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                       tickLine={false}
                       axisLine={{ stroke: 'hsl(var(--border))' }}
@@ -470,9 +494,9 @@ const Dashboard = () => {
                       }}
                       formatter={(value, name) => {
                         if (name === 'netSales') {
-                          return [`$${value.toLocaleString()}`, 'Net Sales'];
+                          return [`$${value.toLocaleString('en-US')}`, 'Net Sales'];
                         }
-                        return [value.toLocaleString(), 'Transactions'];
+                        return [value.toLocaleString('en-US'), 'Transactions'];
                       }}
                     />
                     <Legend
@@ -737,15 +761,15 @@ const Dashboard = () => {
           <TabsContent value="commentary" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>September 2025 Operations Overview</CardTitle>
-                <CardDescription>Report Date: October 5, 2025 | Period: September 1-30, 2025 (22 business days, M-F)</CardDescription>
+                <CardTitle>October 2025 Operations Overview</CardTitle>
+                <CardDescription>Report Date: November 5, 2025 | Period: October 1-31, 2025 (23 business days, M-F)</CardDescription>
               </CardHeader>
               <CardContent className="prose prose-sm max-w-none">
                 <div className="space-y-6 text-sm md:text-base">
                   {/* Executive Summary */}
                   <section>
                     <h3 className="text-lg font-semibold mb-3">Executive Summary</h3>
-                    <p>September 2025 showed moderate performance with <strong>$9,557.07</strong> in net sales, representing a <strong>-12.6%</strong> decrease from August but maintaining strong tip rates at <strong>14.5%</strong>. The month settled into a stable operational pattern with consistent transaction volumes and average check sizes.</p>
+                    <p>October 2025 saw a slight decline in sales with <strong>$8,939.95</strong> in net sales, a <strong>-6.5%</strong> decrease from September. Tip rates remained healthy at <strong>14.2%</strong>. The month continued the trend of stable operations with consistent guest counts and check averages.</p>
                   </section>
 
                   {/* Financial Performance */}
@@ -761,18 +785,18 @@ const Dashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          <tr className="border-b"><td className="p-2"><strong>Net Sales</strong></td><td className="text-right p-2">$9,557.07</td><td className="text-right p-2">$434.41</td></tr>
-                          <tr className="border-b"><td className="p-2"><strong>Gross Sales</strong></td><td className="text-right p-2">$9,818.55</td><td className="text-right p-2">$446.30</td></tr>
-                          <tr className="border-b"><td className="p-2"><strong>Tips</strong></td><td className="text-right p-2">$1,390.36</td><td className="text-right p-2">$63.20</td></tr>
-                          <tr className="border-b"><td className="p-2"><strong>Tax Amount</strong></td><td className="text-right p-2">$737.18</td><td className="text-right p-2">$33.51</td></tr>
-                          <tr className="border-b"><td className="p-2"><strong>Total Amount</strong></td><td className="text-right p-2">$11,684.61</td><td className="text-right p-2">$531.12</td></tr>
-                          <tr className="border-b"><td className="p-2"><strong>Discounts</strong></td><td className="text-right p-2">$254.98</td><td className="text-right p-2">$11.59</td></tr>
-                          <tr className="border-b"><td className="p-2"><strong>Sales Refunds</strong></td><td className="text-right p-2">$6.50</td><td className="text-right p-2">$0.30</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Net Sales</strong></td><td className="text-right p-2">$8,939.95</td><td className="text-right p-2">$388.69</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Gross Sales</strong></td><td className="text-right p-2">$9,069.45</td><td className="text-right p-2">$394.32</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Tips</strong></td><td className="text-right p-2">$1,265.67</td><td className="text-right p-2">$55.03</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Tax Amount</strong></td><td className="text-right p-2">$693.45</td><td className="text-right p-2">$30.15</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Total Amount</strong></td><td className="text-right p-2">$10,899.07</td><td className="text-right p-2">$473.87</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Discounts</strong></td><td className="text-right p-2">$106.05</td><td className="text-right p-2">$4.61</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>Sales Refunds</strong></td><td className="text-right p-2">$25.26</td><td className="text-right p-2">$1.10</td></tr>
                         </tbody>
                       </table>
                     </div>
 
-                    <h4 className="font-semibold mb-2">3-Month Comparison (Jul-Sep)</h4>
+                    <h4 className="font-semibold mb-2">3-Month Comparison (Aug-Oct)</h4>
                     <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                       <table className="w-full text-xs md:text-sm border-collapse min-w-[600px]">
                         <thead>
@@ -787,9 +811,9 @@ const Dashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          <tr className="border-b"><td className="p-2"><strong>July</strong></td><td className="text-right p-2">$12,884.75</td><td className="text-right p-2">-</td><td className="text-right p-2">$1,873.70</td><td className="text-right p-2">14.5%</td><td className="text-right p-2">1,626</td><td className="text-right p-2">$8.54</td></tr>
                           <tr className="border-b"><td className="p-2"><strong>August</strong></td><td className="text-right p-2">$10,933.40</td><td className="text-right p-2">-15.1%</td><td className="text-right p-2">$1,574.10</td><td className="text-right p-2">14.4%</td><td className="text-right p-2">1,372</td><td className="text-right p-2">$8.58</td></tr>
                           <tr className="border-b"><td className="p-2"><strong>September</strong></td><td className="text-right p-2">$9,557.07</td><td className="text-right p-2">-12.6%</td><td className="text-right p-2">$1,390.36</td><td className="text-right p-2">14.5%</td><td className="text-right p-2">1,252</td><td className="text-right p-2">$8.22</td></tr>
+                          <tr className="border-b"><td className="p-2"><strong>October</strong></td><td className="text-right p-2">$8,939.95</td><td className="text-right p-2">-6.5%</td><td className="text-right p-2">$1,265.67</td><td className="text-right p-2">14.2%</td><td className="text-right p-2">1,055</td><td className="text-right p-2">$9.15</td></tr>
                         </tbody>
                       </table>
                     </div>
